@@ -133,6 +133,13 @@ export const AgentChat: React.FC = () => {
       timestamp: new Date().toISOString(),
     };
 
+    window.pendo?.trackAgent("agent_response", {
+      agentId: "tHLHWrYItQ6T6qYvY8Y_m4lCkHw",
+      conversationId: activeThreadId,
+      messageId: agentMsg.id,
+      content: response,
+    });
+
     updateThread(activeThreadId, t => {
       const updated = {
         ...t,
@@ -160,6 +167,14 @@ export const AgentChat: React.FC = () => {
       timestamp: new Date().toISOString(),
     };
 
+    window.pendo?.trackAgent("prompt", {
+      agentId: "tHLHWrYItQ6T6qYvY8Y_m4lCkHw",
+      conversationId: activeThreadId,
+      messageId: userMessage.id,
+      content: trimmed,
+      suggestedPrompt: false,
+    });
+
     updateThread(activeThreadId, t => ({
       ...t,
       messages: [...t.messages, userMessage],
@@ -179,6 +194,14 @@ export const AgentChat: React.FC = () => {
       content: command,
       timestamp: new Date().toISOString(),
     };
+
+    window.pendo?.trackAgent("prompt", {
+      agentId: "tHLHWrYItQ6T6qYvY8Y_m4lCkHw",
+      conversationId: activeThreadId,
+      messageId: userMsg.id,
+      content: command,
+      suggestedPrompt: true,
+    });
 
     updateThread(activeThreadId, t => ({
       ...t,
