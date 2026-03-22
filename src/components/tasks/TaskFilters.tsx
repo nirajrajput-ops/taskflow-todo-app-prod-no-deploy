@@ -73,7 +73,18 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
           <Select
             options={statusOptions}
             value={filter.status}
-            onChange={e => onFilterChange({ ...filter, status: e.target.value as TaskFilter['status'] })}
+            onChange={e => {
+              const newFilter = { ...filter, status: e.target.value as TaskFilter['status'] };
+              onFilterChange(newFilter);
+              if (typeof pendo !== 'undefined') {
+                pendo.track('task_filters_applied', {
+                  statusFilter: newFilter.status,
+                  priorityFilter: newFilter.priority,
+                  categoryFilter: newFilter.categoryId,
+                  sortBy: sort,
+                });
+              }
+            }}
           />
         </div>
 
@@ -81,7 +92,18 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
           <Select
             options={priorityOptions}
             value={filter.priority}
-            onChange={e => onFilterChange({ ...filter, priority: e.target.value as TaskFilter['priority'] })}
+            onChange={e => {
+              const newFilter = { ...filter, priority: e.target.value as TaskFilter['priority'] };
+              onFilterChange(newFilter);
+              if (typeof pendo !== 'undefined') {
+                pendo.track('task_filters_applied', {
+                  statusFilter: newFilter.status,
+                  priorityFilter: newFilter.priority,
+                  categoryFilter: newFilter.categoryId,
+                  sortBy: sort,
+                });
+              }
+            }}
           />
         </div>
 
@@ -89,7 +111,18 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
           <Select
             options={categoryOptions}
             value={filter.categoryId}
-            onChange={e => onFilterChange({ ...filter, categoryId: e.target.value })}
+            onChange={e => {
+              const newFilter = { ...filter, categoryId: e.target.value };
+              onFilterChange(newFilter);
+              if (typeof pendo !== 'undefined') {
+                pendo.track('task_filters_applied', {
+                  statusFilter: newFilter.status,
+                  priorityFilter: newFilter.priority,
+                  categoryFilter: newFilter.categoryId,
+                  sortBy: sort,
+                });
+              }
+            }}
           />
         </div>
 

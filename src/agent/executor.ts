@@ -233,6 +233,18 @@ Tip: Use quotes around names for accuracy!`);
         subtasks: [],
       });
 
+      if (typeof pendo !== 'undefined') {
+        const resolvedCatObj = resolvedCat ? findCategoryByName(categories, resolvedCat) : null;
+        pendo.track('agent_task_created', {
+          taskTitle: entities.title,
+          priority: entities.priority || 'medium',
+          categoryName: resolvedCatObj?.name || 'default',
+          hasDueDate: !!entities.dueDate,
+          hasDueTime: !!entities.dueTime,
+          reminderType: entities.reminder || 'none',
+        });
+      }
+
       newCtx.lastMentionedTaskTitle = entities.title;
 
       const parts = [`Task "${entities.title}" created successfully!`];
@@ -489,6 +501,17 @@ Tip: Use quotes around names for accuracy!`);
       const newSubtask = { id: uuidv4(), title: entities.subtaskTitle, completed: false };
       const updated = { ...task, subtasks: [...task.subtasks, newSubtask] };
       actions.updateTask(updated);
+
+      if (typeof pendo !== 'undefined') {
+        pendo.track('subtask_added', {
+          taskId: task.id,
+          taskTitle: task.title,
+          subtaskTitle: entities.subtaskTitle,
+          totalSubtaskCount: updated.subtasks.length,
+          source: 'agent',
+        });
+      }
+
       newCtx.lastMentionedTaskTitle = task.title;
       return result(`Subtask "${entities.subtaskTitle}" added to task "${task.title}".`);
     }
