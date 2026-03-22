@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
+import { AgentChat } from '../agent/AgentChat';
 import { useNotifications } from '../../context/NotificationContext';
 
 export const Layout: React.FC = () => {
@@ -42,6 +43,8 @@ export const Layout: React.FC = () => {
           </div>
         </main>
       </div>
+
+      <AgentChat />
     </div>
   );
 };
