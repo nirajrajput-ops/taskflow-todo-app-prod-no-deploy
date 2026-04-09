@@ -489,6 +489,12 @@ const tasks: Task[] = [
 ];
 
 export const seedData = () => {
+  if (typeof window !== 'undefined' && (window as any).pendo) {
+    (window as any).pendo.track('seed_data_loaded', {
+      taskCount: tasks.length,
+      categoryCount: categories.length,
+    });
+  }
   localStorage.setItem('todo_app_tasks', JSON.stringify(tasks));
   localStorage.setItem('todo_app_categories', JSON.stringify(categories));
   window.location.reload();

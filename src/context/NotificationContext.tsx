@@ -86,8 +86,15 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       return false;
     }
 
+    const previousStatus = Notification.permission;
     const permission = await Notification.requestPermission();
     setPermissionStatus(permission);
+    if (typeof window !== 'undefined' && (window as any).pendo) {
+      (window as any).pendo.track('browser_notification_permission_requested', {
+        permissionResult: permission,
+        previousPermissionStatus: previousStatus,
+      });
+    }
     return permission === 'granted';
   };
 
@@ -104,6 +111,15 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
               `Reminder: Task "${task.title}" is due soon!`,
               'reminder'
             );
+            if (typeof window !== 'undefined' && (window as any).pendo) {
+              (window as any).pendo.track('reminder_triggered', {
+                taskId: task.id,
+                taskTitle: task.title,
+                reminderType: task.reminder,
+                notificationType: 'reminder',
+                browserNotificationPermission: 'Notification' in window ? Notification.permission : 'unsupported',
+              });
+            }
             markReminderTriggered(task.id);
           }
 
@@ -119,6 +135,15 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
                 `Task "${task.title}" is overdue!`,
                 'overdue'
               );
+              if (typeof window !== 'undefined' && (window as any).pendo) {
+                (window as any).pendo.track('overdue_notification_generated', {
+                  taskId: task.id,
+                  taskTitle: task.title,
+                  priority: task.priority,
+                  categoryId: task.categoryId,
+                  dueDate: task.dueDate,
+                });
+              }
             }
           }
         }
