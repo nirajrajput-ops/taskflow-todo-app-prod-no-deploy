@@ -123,6 +123,16 @@ export const AgentChat: React.FC = () => {
     const currentCtx = getThreadContext(activeThreadId);
     const { response, newCtx } = executeCommand(parsed, taskContext, currentCtx);
 
+    if (typeof window !== 'undefined' && (window as any).pendo) {
+      (window as any).pendo.track('ai_command_executed', {
+        intent: parsed.intent,
+        rawCommand: text.substring(0, 100),
+        threadId: activeThreadId,
+        hasContextReference: !!currentCtx.lastMentionedTaskTitle,
+        success: !response.includes('not found') && !response.includes("didn't understand"),
+      });
+    }
+
     // Update the conversation context for this thread
     setThreadContext(activeThreadId, newCtx);
 
@@ -173,6 +183,12 @@ export const AgentChat: React.FC = () => {
   };
 
   const handleQuickAction = (command: string) => {
+    if (typeof window !== 'undefined' && (window as any).pendo) {
+      (window as any).pendo.track('ai_quick_action_used', {
+        command,
+        threadId: activeThreadId,
+      });
+    }
     const userMsg: ChatMessage = {
       id: uuidv4(),
       role: 'user',
@@ -202,6 +218,11 @@ export const AgentChat: React.FC = () => {
     setThreads(prev => [thread, ...prev]);
     setActiveThreadId(thread.id);
     setView('chat');
+    if (typeof window !== 'undefined' && (window as any).pendo) {
+      (window as any).pendo.track('ai_thread_created', {
+        totalThreadCount: threads.length + 1,
+      });
+    }
   };
 
   const handleSwitchThread = (threadId: string) => {

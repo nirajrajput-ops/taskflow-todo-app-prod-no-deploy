@@ -57,6 +57,31 @@ export const TaskDetailPage: React.FC = () => {
   };
 
   const handleToggleStatus = () => {
+    if (typeof window !== 'undefined' && (window as any).pendo) {
+      if (task.status === 'completed') {
+        (window as any).pendo.track('task_reopened', {
+          taskId: task.id,
+          priority: task.priority,
+          categoryId: task.categoryId,
+          timeSinceCompletionMs: task.completedAt ? Date.now() - new Date(task.completedAt).getTime() : null,
+          source: 'task_detail',
+        });
+      } else {
+        const completedSubs = task.subtasks.filter(s => s.completed).length;
+        (window as any).pendo.track('task_completed', {
+          taskId: task.id,
+          priority: task.priority,
+          categoryId: task.categoryId,
+          categoryName: category?.name || 'Unknown',
+          hadDueDate: !!task.dueDate,
+          wasOverdue: isOverdue(task.dueDate, task.dueTime, task.status),
+          subtaskCount: task.subtasks.length,
+          completedSubtaskCount: completedSubs,
+          timeToCompletionMs: Date.now() - new Date(task.createdAt).getTime(),
+          source: 'task_detail',
+        });
+      }
+    }
     toggleTaskStatus(task.id);
     showToast(
       task.status === 'pending' ? 'Task completed!' : 'Task marked as pending',
@@ -65,6 +90,19 @@ export const TaskDetailPage: React.FC = () => {
   };
 
   const handleToggleSubtask = (subtaskId: string) => {
+    if (typeof window !== 'undefined' && (window as any).pendo) {
+      const subtask = task.subtasks.find(s => s.id === subtaskId);
+      const completed = task.subtasks.filter(s => s.completed).length;
+      const total = task.subtasks.length;
+      (window as any).pendo.track('subtask_toggled', {
+        taskId: task.id,
+        subtaskId,
+        newStatus: subtask?.completed ? 'pending' : 'completed',
+        completedSubtasks: subtask?.completed ? completed - 1 : completed + 1,
+        totalSubtasks: total,
+        subtaskProgressPercent: total > 0 ? Math.round(((subtask?.completed ? completed - 1 : completed + 1) / total) * 100) : 0,
+      });
+    }
     toggleSubtask(task.id, subtaskId);
   };
 

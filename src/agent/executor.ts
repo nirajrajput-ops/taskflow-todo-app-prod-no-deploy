@@ -233,6 +233,19 @@ Tip: Use quotes around names for accuracy!`);
         subtasks: [],
       });
 
+      if (typeof window !== 'undefined' && (window as any).pendo) {
+        const cat = findCategoryByName(categories, resolvedCat || '');
+        (window as any).pendo.track('ai_task_created', {
+          taskTitle: entities.title,
+          priority: entities.priority || 'medium',
+          categoryName: cat?.name || 'default',
+          hasDueDate: !!entities.dueDate,
+          hasDueTime: !!entities.dueTime,
+          hasReminder: !!entities.reminder && entities.reminder !== 'none',
+          threadId: 'agent',
+        });
+      }
+
       newCtx.lastMentionedTaskTitle = entities.title;
 
       const parts = [`Task "${entities.title}" created successfully!`];
@@ -315,6 +328,14 @@ Tip: Use quotes around names for accuracy!`);
         return result(`Task "${title}" not found. Use "show tasks" to see available tasks.`);
       }
 
+      if (typeof window !== 'undefined' && (window as any).pendo) {
+        (window as any).pendo.track('ai_task_deleted', {
+          taskTitle: task.title,
+          taskStatus: task.status,
+          usedContextReference: hasContextReference(raw),
+          threadId: 'agent',
+        });
+      }
       actions.deleteTask(task.id);
       newCtx.lastMentionedTaskTitle = null;
       // Remove from listed tasks if present
@@ -337,6 +358,15 @@ Tip: Use quotes around names for accuracy!`);
         return result(`Task "${task.title}" is already completed.`);
       }
 
+      if (typeof window !== 'undefined' && (window as any).pendo) {
+        (window as any).pendo.track('ai_task_completed', {
+          taskTitle: task.title,
+          priority: task.priority,
+          categoryId: task.categoryId,
+          usedContextReference: hasContextReference(raw),
+          threadId: 'agent',
+        });
+      }
       actions.toggleTaskStatus(task.id);
       newCtx.lastMentionedTaskTitle = task.title;
       return result(`Task "${task.title}" marked as completed!`);

@@ -43,10 +43,36 @@ export const TaskFormPage: React.FC = () => {
         ...taskData,
         updatedAt: new Date().toISOString(),
       });
+      if (typeof window !== 'undefined' && (window as any).pendo) {
+        (window as any).pendo.track('task_updated', {
+          taskId: existingTask.id,
+          priority: taskData.priority,
+          categoryId: taskData.categoryId,
+          hasDueDate: !!taskData.dueDate,
+          hasDueTime: !!taskData.dueTime,
+          reminder: taskData.reminder,
+          subtaskCount: taskData.subtasks.length,
+          hasDescription: !!taskData.description,
+        });
+      }
       showToast('Task updated successfully!', 'success');
       navigate(`/tasks/${existingTask.id}`);
     } else {
       addTask(taskData);
+      if (typeof window !== 'undefined' && (window as any).pendo) {
+        const category = categories.find(c => c.id === taskData.categoryId);
+        (window as any).pendo.track('task_created', {
+          priority: taskData.priority,
+          categoryId: taskData.categoryId,
+          categoryName: category?.name || 'Unknown',
+          hasDueDate: !!taskData.dueDate,
+          hasDueTime: !!taskData.dueTime,
+          reminder: taskData.reminder,
+          subtaskCount: taskData.subtasks.length,
+          hasDescription: !!taskData.description,
+          source: 'task_form',
+        });
+      }
       showToast('Task created successfully!', 'success');
       navigate('/tasks');
     }

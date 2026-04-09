@@ -36,6 +36,16 @@ export const TasksPage: React.FC = () => {
     if (newFilter.search) params.set('search', newFilter.search);
     const currentSort = searchParams.get('sort');
     if (currentSort && currentSort !== 'createdAt') params.set('sort', currentSort);
+    if (typeof window !== 'undefined' && (window as any).pendo) {
+      (window as any).pendo.track('task_filters_applied', {
+        statusFilter: newFilter.status,
+        priorityFilter: newFilter.priority,
+        categoryFilter: newFilter.categoryId,
+        sortBy: currentSort || 'createdAt',
+        resultsCount: tasks.length,
+        totalTaskCount: tasks.length,
+      });
+    }
     setSearchParams(params, { replace: true });
   }, [searchParams, setSearchParams]);
 
@@ -82,6 +92,15 @@ export const TasksPage: React.FC = () => {
           t.title.toLowerCase().includes(searchLower) ||
           t.description.toLowerCase().includes(searchLower)
       );
+      if (typeof window !== 'undefined' && (window as any).pendo) {
+        const activeFilters = [filter.status, filter.priority, filter.categoryId].filter(f => f !== 'all').length;
+        (window as any).pendo.track('task_search_executed', {
+          searchQuery: filter.search,
+          resultsCount: result.length,
+          totalTaskCount: tasks.length,
+          activeFiltersCount: activeFilters,
+        });
+      }
     }
 
     // Sort
@@ -111,15 +130,44 @@ export const TasksPage: React.FC = () => {
   }, [tasks, filter, sort]);
 
   const handleToggleStatus = (taskId: string) => {
-    toggleTaskStatus(taskId);
     const task = tasks.find(t => t.id === taskId);
+    toggleTaskStatus(taskId);
     if (task?.status === 'pending') {
+      if (typeof window !== 'undefined' && (window as any).pendo) {
+        const category = categories.find(c => c.id === task.categoryId);
+        const completedSubtasks = task.subtasks.filter(s => s.completed).length;
+        (window as any).pendo.track('task_completed', {
+          taskId: task.id,
+          priority: task.priority,
+          categoryId: task.categoryId,
+          categoryName: category?.name || 'Unknown',
+          hadDueDate: !!task.dueDate,
+          wasOverdue: isOverdue(task.dueDate, task.dueTime, task.status),
+          subtaskCount: task.subtasks.length,
+          completedSubtaskCount: completedSubtasks,
+          timeToCompletionMs: Date.now() - new Date(task.createdAt).getTime(),
+          source: 'tasks_page',
+        });
+      }
       showToast('Task completed!', 'success');
     }
   };
 
   const handleDeleteConfirm = () => {
     if (deleteTaskId) {
+      const task = tasks.find(t => t.id === deleteTaskId);
+      if (typeof window !== 'undefined' && (window as any).pendo && task) {
+        (window as any).pendo.track('task_deleted', {
+          taskId: task.id,
+          taskStatus: task.status,
+          priority: task.priority,
+          categoryId: task.categoryId,
+          hadDueDate: !!task.dueDate,
+          wasOverdue: isOverdue(task.dueDate, task.dueTime, task.status),
+          subtaskCount: task.subtasks.length,
+          source: 'tasks_page',
+        });
+      }
       deleteTask(deleteTaskId);
       showToast('Task deleted', 'success');
       setDeleteTaskId(null);
@@ -127,6 +175,14 @@ export const TasksPage: React.FC = () => {
   };
 
   const handleClearFilters = () => {
+    if (typeof window !== 'undefined' && (window as any).pendo) {
+      (window as any).pendo.track('task_filters_cleared', {
+        previousStatusFilter: filter.status,
+        previousPriorityFilter: filter.priority,
+        previousCategoryFilter: filter.categoryId,
+        previousSort: sort,
+      });
+    }
     setFilter({
       status: 'all',
       priority: 'all',
