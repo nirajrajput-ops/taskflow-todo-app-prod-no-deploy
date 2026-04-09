@@ -5,12 +5,20 @@ import './index.css'
 import { seedData } from './utils/seedData'
 
 // Expose seed function for development
+declare var pendo: any;
+
 declare global {
   interface Window {
     seedData: () => void;
   }
 }
 window.seedData = seedData;
+
+pendo.initialize({
+  visitor: {
+    id: ''
+  }
+});
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
