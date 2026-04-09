@@ -134,7 +134,7 @@ export const AgentChat: React.FC = () => {
     };
 
     window.pendo?.trackAgent("agent_response", {
-      agentId: "tHLHWrYItQ6T6qYvY8Y_m4lCkHw",
+      agentId: "kcsKeoQG2vBrL9gcX5yI3AMOMSc",
       conversationId: activeThreadId,
       messageId: agentMsg.id,
       content: response,
@@ -168,7 +168,7 @@ export const AgentChat: React.FC = () => {
     };
 
     window.pendo?.trackAgent("prompt", {
-      agentId: "tHLHWrYItQ6T6qYvY8Y_m4lCkHw",
+      agentId: "kcsKeoQG2vBrL9gcX5yI3AMOMSc",
       conversationId: activeThreadId,
       messageId: userMessage.id,
       content: trimmed,
@@ -196,7 +196,7 @@ export const AgentChat: React.FC = () => {
     };
 
     window.pendo?.trackAgent("prompt", {
-      agentId: "tHLHWrYItQ6T6qYvY8Y_m4lCkHw",
+      agentId: "kcsKeoQG2vBrL9gcX5yI3AMOMSc",
       conversationId: activeThreadId,
       messageId: userMsg.id,
       content: command,
