@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, FolderOpen } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, FolderOpen, Copy } from 'lucide-react';
 import { useTasks } from '../../context/TaskContext';
 import { isOverdue } from '../../utils/dateUtils';
 
@@ -11,7 +11,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
-  const { tasks, categories } = useTasks();
+  const { tasks, categories, templates } = useTasks();
 
   const pendingCount = tasks.filter(t => t.status === 'pending').length;
   const overdueCount = tasks.filter(t =>
@@ -21,6 +21,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/tasks', label: 'All Tasks', icon: CheckSquare, count: pendingCount },
+    { path: '/templates', label: 'Templates', icon: Copy, count: templates.length },
     { path: '/categories', label: 'Categories', icon: FolderOpen, count: categories.length },
   ];
 

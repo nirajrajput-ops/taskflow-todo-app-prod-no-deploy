@@ -8,6 +8,7 @@ import { TasksPage } from './pages/TasksPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
 import { TaskFormPage } from './pages/TaskFormPage';
 import { CategoriesPage } from './pages/CategoriesPage';
+import { TemplatesPage } from './pages/TemplatesPage';
 
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
                 <Route path="tasks/:id" element={<TaskDetailPage />} />
                 <Route path="tasks/:id/edit" element={<TaskFormPage />} />
                 <Route path="categories" element={<CategoriesPage />} />
+                <Route path="templates" element={<TemplatesPage />} />
               </Route>
             </Routes>
           </ToastProvider>

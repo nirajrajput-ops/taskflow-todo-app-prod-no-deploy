@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useReducer, useEffect, useRef, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Task, Category } from '../types';
+import { Task, Category, TaskTemplate, UserMeta } from '../types';
 import { storage } from '../utils/storage';
 
 interface TaskState {
   tasks: Task[];
   categories: Category[];
+  templates: TaskTemplate[];
+  userMeta: UserMeta;
 }
 
 type TaskAction =
@@ -19,7 +21,12 @@ type TaskAction =
   | { type: 'SET_CATEGORIES'; payload: Category[] }
   | { type: 'ADD_CATEGORY'; payload: Category }
   | { type: 'UPDATE_CATEGORY'; payload: Category }
-  | { type: 'DELETE_CATEGORY'; payload: { categoryId: string; reassignTo: string } };
+  | { type: 'DELETE_CATEGORY'; payload: { categoryId: string; reassignTo: string } }
+  | { type: 'SET_TEMPLATES'; payload: TaskTemplate[] }
+  | { type: 'ADD_TEMPLATE'; payload: TaskTemplate }
+  | { type: 'UPDATE_TEMPLATE'; payload: TaskTemplate }
+  | { type: 'DELETE_TEMPLATE'; payload: string }
+  | { type: 'SET_USER_META'; payload: UserMeta };
 
 const taskReducer = (state: TaskState, action: TaskAction): TaskState => {
   switch (action.type) {
@@ -116,6 +123,29 @@ const taskReducer = (state: TaskState, action: TaskAction): TaskState => {
       };
     }
 
+    case 'SET_TEMPLATES':
+      return { ...state, templates: action.payload };
+
+    case 'ADD_TEMPLATE':
+      return { ...state, templates: [...state.templates, action.payload] };
+
+    case 'UPDATE_TEMPLATE':
+      return {
+        ...state,
+        templates: state.templates.map(t =>
+          t.id === action.payload.id ? action.payload : t
+        ),
+      };
+
+    case 'DELETE_TEMPLATE':
+      return {
+        ...state,
+        templates: state.templates.filter(t => t.id !== action.payload),
+      };
+
+    case 'SET_USER_META':
+      return { ...state, userMeta: action.payload };
+
     default:
       return state;
   }
@@ -124,6 +154,8 @@ const taskReducer = (state: TaskState, action: TaskAction): TaskState => {
 interface TaskContextValue {
   tasks: Task[];
   categories: Category[];
+  templates: TaskTemplate[];
+  userMeta: UserMeta;
   addTask: (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'completedAt' | 'reminderTriggered'>) => void;
   updateTask: (task: Task) => void;
   deleteTask: (taskId: string) => void;
@@ -135,6 +167,11 @@ interface TaskContextValue {
   updateCategory: (category: Category) => void;
   deleteCategory: (categoryId: string, reassignTo: string) => void;
   getCategoryById: (categoryId: string) => Category | undefined;
+  addTemplate: (templateData: Omit<TaskTemplate, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateTemplate: (template: TaskTemplate) => void;
+  deleteTemplate: (templateId: string) => void;
+  getTemplateById: (templateId: string) => TaskTemplate | undefined;
+  createTaskFromTemplate: (templateId: string, title: string) => void;
 }
 
 const TaskContext = createContext<TaskContextValue | undefined>(undefined);
@@ -144,6 +181,8 @@ const getInitialState = (): TaskState => {
   return {
     tasks: storage.getTasks(),
     categories: storage.getCategories(),
+    templates: storage.getTemplates(),
+    userMeta: storage.getUserMeta(),
   };
 };
 
@@ -164,6 +203,16 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     storage.setCategories(state.categories);
   }, [state.categories]);
+
+  // Save templates to localStorage whenever they change
+  useEffect(() => {
+    storage.setTemplates(state.templates);
+  }, [state.templates]);
+
+  // Save userMeta to localStorage whenever it changes
+  useEffect(() => {
+    storage.setUserMeta(state.userMeta);
+  }, [state.userMeta]);
 
   const addTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'completedAt' | 'reminderTriggered'>) => {
     const now = new Date().toISOString();
@@ -225,11 +274,72 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return state.categories.find(cat => cat.id === categoryId);
   };
 
+  const addTemplate = (templateData: Omit<TaskTemplate, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newTemplate: TaskTemplate = {
+      ...templateData,
+      id: uuidv4(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    dispatch({ type: 'ADD_TEMPLATE', payload: newTemplate });
+    const updatedMeta: UserMeta = {
+      ...state.userMeta,
+      totalTemplatesCreated: state.userMeta.totalTemplatesCreated + 1,
+      hasUsedTemplates: true,
+    };
+    dispatch({ type: 'SET_USER_META', payload: updatedMeta });
+  };
+
+  const updateTemplate = (template: TaskTemplate) => {
+    const updated = { ...template, updatedAt: new Date().toISOString() };
+    dispatch({ type: 'UPDATE_TEMPLATE', payload: updated });
+  };
+
+  const deleteTemplate = (templateId: string) => {
+    dispatch({ type: 'DELETE_TEMPLATE', payload: templateId });
+  };
+
+  const getTemplateById = (templateId: string) => {
+    return state.templates.find(t => t.id === templateId);
+  };
+
+  const createTaskFromTemplate = (templateId: string, title: string) => {
+    const template = state.templates.find(t => t.id === templateId);
+    if (!template) return;
+
+    const subtasksWithIds = template.subtasks.map(st => ({
+      ...st,
+      id: uuidv4(),
+    }));
+
+    addTask({
+      title,
+      description: template.description,
+      status: 'pending',
+      priority: template.priority,
+      categoryId: template.categoryId,
+      dueDate: null,
+      dueTime: null,
+      reminder: template.reminder,
+      subtasks: subtasksWithIds,
+    });
+
+    const updatedMeta: UserMeta = {
+      ...state.userMeta,
+      hasUsedTemplates: true,
+      lastTemplateUsedAt: new Date().toISOString(),
+    };
+    dispatch({ type: 'SET_USER_META', payload: updatedMeta });
+  };
+
   return (
     <TaskContext.Provider
       value={{
         tasks: state.tasks,
         categories: state.categories,
+        templates: state.templates,
+        userMeta: state.userMeta,
         addTask,
         updateTask,
         deleteTask,
@@ -241,6 +351,11 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateCategory,
         deleteCategory,
         getCategoryById,
+        addTemplate,
+        updateTemplate,
+        deleteTemplate,
+        getTemplateById,
+        createTaskFromTemplate,
       }}
     >
       {children}

@@ -46,3 +46,21 @@ export interface Notification {
   read: boolean;
   createdAt: string;
 }
+
+export interface TaskTemplate {
+  id: string;
+  name: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+  categoryId: string;
+  reminder: 'none' | '15min' | '1hour' | '1day';
+  subtasks: Omit<Subtask, 'id'>[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserMeta {
+  totalTemplatesCreated: number;
+  hasUsedTemplates: boolean;
+  lastTemplateUsedAt: string | null;
+}
