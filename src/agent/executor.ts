@@ -233,6 +233,18 @@ Tip: Use quotes around names for accuracy!`);
         subtasks: [],
       });
 
+      if (typeof pendo !== 'undefined') {
+        const resolvedCatObj = resolvedCat ? findCategoryByName(categories, resolvedCat) : null;
+        pendo.track('ai_task_created', {
+          taskTitle: entities.title,
+          priority: entities.priority || 'medium',
+          categoryName: resolvedCatObj?.name || 'default',
+          hasDueDate: !!entities.dueDate,
+          hasDueTime: !!entities.dueTime,
+          reminderType: entities.reminder || 'none',
+        });
+      }
+
       newCtx.lastMentionedTaskTitle = entities.title;
 
       const parts = [`Task "${entities.title}" created successfully!`];
@@ -316,6 +328,18 @@ Tip: Use quotes around names for accuracy!`);
       }
 
       actions.deleteTask(task.id);
+
+      if (typeof pendo !== 'undefined') {
+        pendo.track('ai_task_deleted', {
+          taskId: task.id,
+          taskTitle: task.title,
+          taskStatus: task.status,
+          priority: task.priority,
+          categoryId: task.categoryId,
+          usedContextReference: hasContextReference(raw),
+        });
+      }
+
       newCtx.lastMentionedTaskTitle = null;
       // Remove from listed tasks if present
       newCtx.lastListedTasks = ctx.lastListedTasks.filter(t => t !== task.title);
@@ -338,6 +362,17 @@ Tip: Use quotes around names for accuracy!`);
       }
 
       actions.toggleTaskStatus(task.id);
+
+      if (typeof pendo !== 'undefined') {
+        pendo.track('ai_task_completed', {
+          taskId: task.id,
+          taskTitle: task.title,
+          priority: task.priority,
+          categoryId: task.categoryId,
+          usedContextReference: hasContextReference(raw),
+        });
+      }
+
       newCtx.lastMentionedTaskTitle = task.title;
       return result(`Task "${task.title}" marked as completed!`);
     }
@@ -489,6 +524,17 @@ Tip: Use quotes around names for accuracy!`);
       const newSubtask = { id: uuidv4(), title: entities.subtaskTitle, completed: false };
       const updated = { ...task, subtasks: [...task.subtasks, newSubtask] };
       actions.updateTask(updated);
+
+      if (typeof pendo !== 'undefined') {
+        pendo.track('subtask_added', {
+          taskId: task.id,
+          taskTitle: task.title,
+          subtaskTitle: entities.subtaskTitle,
+          totalSubtaskCount: updated.subtasks.length,
+          source: 'agent',
+        });
+      }
+
       newCtx.lastMentionedTaskTitle = task.title;
       return result(`Subtask "${entities.subtaskTitle}" added to task "${task.title}".`);
     }

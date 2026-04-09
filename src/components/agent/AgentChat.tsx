@@ -123,6 +123,17 @@ export const AgentChat: React.FC = () => {
     const currentCtx = getThreadContext(activeThreadId);
     const { response, newCtx } = executeCommand(parsed, taskContext, currentCtx);
 
+    if (typeof pendo !== 'undefined') {
+      pendo.track('ai_command_executed', {
+        intent: parsed.intent,
+        rawCommand: text.substring(0, 200),
+        usedContextReference: !!currentCtx.lastMentionedTaskTitle,
+        hadLastMentionedTask: !!currentCtx.lastMentionedTaskTitle,
+        threadId: activeThreadId,
+        messageCount: (threads.find(t => t.id === activeThreadId)?.messages.length || 0),
+      });
+    }
+
     // Update the conversation context for this thread
     setThreadContext(activeThreadId, newCtx);
 
@@ -173,6 +184,13 @@ export const AgentChat: React.FC = () => {
   };
 
   const handleQuickAction = (command: string) => {
+    if (typeof pendo !== 'undefined') {
+      pendo.track('ai_quick_action_used', {
+        command: command,
+        threadId: activeThreadId,
+      });
+    }
+
     const userMsg: ChatMessage = {
       id: uuidv4(),
       role: 'user',
@@ -202,6 +220,12 @@ export const AgentChat: React.FC = () => {
     setThreads(prev => [thread, ...prev]);
     setActiveThreadId(thread.id);
     setView('chat');
+
+    if (typeof pendo !== 'undefined') {
+      pendo.track('ai_thread_created', {
+        totalThreadCount: threads.length + 1,
+      });
+    }
   };
 
   const handleSwitchThread = (threadId: string) => {
