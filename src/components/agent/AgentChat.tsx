@@ -1,3 +1,9 @@
+declare global {
+  interface Window {
+    pendo?: { trackAgent: (eventType: string, metadata: object) => void };
+  }
+}
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Bot, X, Send, Sparkles, Plus, ChevronLeft, MessageSquare, Trash2, PenLine } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
@@ -146,6 +152,13 @@ export const AgentChat: React.FC = () => {
       return updated;
     });
 
+    window.pendo?.trackAgent("agent_response", {
+      agentId: "kcsKeoQG2vBrL9gcX5yI3AMOMSc",
+      conversationId: activeThreadId,
+      messageId: agentMsg.id,
+      content: response,
+    });
+
     setIsTyping(false);
   }, [activeThreadId, taskContext, updateThread, getThreadContext, setThreadContext]);
 
@@ -166,6 +179,14 @@ export const AgentChat: React.FC = () => {
       updatedAt: new Date().toISOString(),
     }));
 
+    window.pendo?.trackAgent("prompt", {
+      agentId: "kcsKeoQG2vBrL9gcX5yI3AMOMSc",
+      conversationId: activeThreadId,
+      messageId: userMessage.id,
+      content: trimmed,
+      suggestedPrompt: false,
+    });
+
     setInput('');
     setIsTyping(true);
 
@@ -185,6 +206,14 @@ export const AgentChat: React.FC = () => {
       messages: [...t.messages, userMsg],
       updatedAt: new Date().toISOString(),
     }));
+
+    window.pendo?.trackAgent("prompt", {
+      agentId: "kcsKeoQG2vBrL9gcX5yI3AMOMSc",
+      conversationId: activeThreadId,
+      messageId: userMsg.id,
+      content: command,
+      suggestedPrompt: true,
+    });
 
     setIsTyping(true);
     setTimeout(() => processCommand(command), 300 + Math.random() * 400);
