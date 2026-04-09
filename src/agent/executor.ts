@@ -235,7 +235,7 @@ Tip: Use quotes around names for accuracy!`);
 
       if (typeof pendo !== 'undefined') {
         const resolvedCatObj = resolvedCat ? findCategoryByName(categories, resolvedCat) : null;
-        pendo.track('agent_task_created', {
+        pendo.track('ai_task_created', {
           taskTitle: entities.title,
           priority: entities.priority || 'medium',
           categoryName: resolvedCatObj?.name || 'default',
@@ -328,6 +328,18 @@ Tip: Use quotes around names for accuracy!`);
       }
 
       actions.deleteTask(task.id);
+
+      if (typeof pendo !== 'undefined') {
+        pendo.track('ai_task_deleted', {
+          taskId: task.id,
+          taskTitle: task.title,
+          taskStatus: task.status,
+          priority: task.priority,
+          categoryId: task.categoryId,
+          usedContextReference: hasContextReference(raw),
+        });
+      }
+
       newCtx.lastMentionedTaskTitle = null;
       // Remove from listed tasks if present
       newCtx.lastListedTasks = ctx.lastListedTasks.filter(t => t !== task.title);
@@ -350,6 +362,17 @@ Tip: Use quotes around names for accuracy!`);
       }
 
       actions.toggleTaskStatus(task.id);
+
+      if (typeof pendo !== 'undefined') {
+        pendo.track('ai_task_completed', {
+          taskId: task.id,
+          taskTitle: task.title,
+          priority: task.priority,
+          categoryId: task.categoryId,
+          usedContextReference: hasContextReference(raw),
+        });
+      }
+
       newCtx.lastMentionedTaskTitle = task.title;
       return result(`Task "${task.title}" marked as completed!`);
     }

@@ -124,7 +124,7 @@ export const AgentChat: React.FC = () => {
     const { response, newCtx } = executeCommand(parsed, taskContext, currentCtx);
 
     if (typeof pendo !== 'undefined') {
-      pendo.track('agent_command_executed', {
+      pendo.track('ai_command_executed', {
         intent: parsed.intent,
         rawCommand: text.substring(0, 200),
         usedContextReference: !!currentCtx.lastMentionedTaskTitle,
@@ -185,7 +185,7 @@ export const AgentChat: React.FC = () => {
 
   const handleQuickAction = (command: string) => {
     if (typeof pendo !== 'undefined') {
-      pendo.track('agent_quick_action_used', {
+      pendo.track('ai_quick_action_used', {
         command: command,
         threadId: activeThreadId,
       });
@@ -222,7 +222,7 @@ export const AgentChat: React.FC = () => {
     setView('chat');
 
     if (typeof pendo !== 'undefined') {
-      pendo.track('agent_thread_created', {
+      pendo.track('ai_thread_created', {
         totalThreadCount: threads.length + 1,
       });
     }

@@ -491,6 +491,14 @@ const tasks: Task[] = [
 export const seedData = () => {
   localStorage.setItem('todo_app_tasks', JSON.stringify(tasks));
   localStorage.setItem('todo_app_categories', JSON.stringify(categories));
+
+  if (typeof pendo !== 'undefined') {
+    pendo.track('seed_data_loaded', {
+      taskCount: tasks.length,
+      categoryCount: categories.length,
+    });
+  }
+
   window.location.reload();
 };
 

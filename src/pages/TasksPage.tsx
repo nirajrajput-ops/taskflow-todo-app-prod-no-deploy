@@ -163,6 +163,15 @@ export const TasksPage: React.FC = () => {
   };
 
   const handleClearFilters = () => {
+    if (typeof pendo !== 'undefined') {
+      pendo.track('task_filters_cleared', {
+        previousStatusFilter: filter.status,
+        previousPriorityFilter: filter.priority,
+        previousCategoryFilter: filter.categoryId,
+        hadSearchQuery: !!filter.search,
+        previousSort: sort,
+      });
+    }
     setFilter({
       status: 'all',
       priority: 'all',

@@ -78,12 +78,6 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   const clearNotifications = () => {
-    if (typeof pendo !== 'undefined') {
-      pendo.track('notifications_cleared', {
-        clearedCount: notifications.length,
-        unreadCount: notifications.filter(n => !n.read).length,
-      });
-    }
     setNotifications([]);
   };
 
@@ -92,8 +86,17 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       return false;
     }
 
+    const previousPermission = Notification.permission;
     const permission = await Notification.requestPermission();
     setPermissionStatus(permission);
+
+    if (typeof pendo !== 'undefined') {
+      pendo.track('browser_notification_permission_requested', {
+        permissionResult: permission,
+        previousPermission: previousPermission,
+      });
+    }
+
     return permission === 'granted';
   };
 
@@ -136,7 +139,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
                 'overdue'
               );
               if (typeof pendo !== 'undefined') {
-                pendo.track('overdue_notification_triggered', {
+                pendo.track('overdue_notification_generated', {
                   taskId: task.id,
                   taskTitle: task.title,
                   taskPriority: task.priority,
