@@ -5,6 +5,7 @@ import { ChatMessage, ChatThread, ConversationContext } from '../../agent/types'
 import { parseCommand, executeCommand, createEmptyContext } from '../../agent';
 import { useTasks } from '../../context/TaskContext';
 
+const PENDO_AGENT_ID = 'JhL4K0-HHEASRRji7A3piEllHik';
 const STORAGE_KEY = 'todo_app_agent_threads';
 const CTX_STORAGE_KEY = 'todo_app_agent_contexts';
 
@@ -146,6 +147,15 @@ export const AgentChat: React.FC = () => {
       return updated;
     });
 
+    if (typeof pendo !== 'undefined') {
+      pendo.trackAgent("agent_response", {
+        agentId: PENDO_AGENT_ID,
+        conversationId: activeThreadId,
+        messageId: agentMsg.id,
+        content: response,
+      });
+    }
+
     setIsTyping(false);
   }, [activeThreadId, taskContext, updateThread, getThreadContext, setThreadContext]);
 
@@ -166,6 +176,16 @@ export const AgentChat: React.FC = () => {
       updatedAt: new Date().toISOString(),
     }));
 
+    if (typeof pendo !== 'undefined') {
+      pendo.trackAgent("prompt", {
+        agentId: PENDO_AGENT_ID,
+        conversationId: activeThreadId,
+        messageId: userMessage.id,
+        content: trimmed,
+        suggestedPrompt: false,
+      });
+    }
+
     setInput('');
     setIsTyping(true);
 
@@ -185,6 +205,16 @@ export const AgentChat: React.FC = () => {
       messages: [...t.messages, userMsg],
       updatedAt: new Date().toISOString(),
     }));
+
+    if (typeof pendo !== 'undefined') {
+      pendo.trackAgent("prompt", {
+        agentId: PENDO_AGENT_ID,
+        conversationId: activeThreadId,
+        messageId: userMsg.id,
+        content: command,
+        suggestedPrompt: true,
+      });
+    }
 
     setIsTyping(true);
     setTimeout(() => processCommand(command), 300 + Math.random() * 400);
