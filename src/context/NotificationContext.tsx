@@ -68,6 +68,15 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   }, []);
 
   const markAsRead = (notificationId: string) => {
+    const notification = notifications.find(n => n.id === notificationId);
+    if (typeof pendo !== 'undefined' && notification) {
+      pendo.track('notification_marked_read', {
+        notificationId,
+        notificationType: notification.type,
+        taskId: notification.taskId,
+        taskTitle: notification.taskTitle,
+      });
+    }
     setNotifications(prev =>
       prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
     );
@@ -78,6 +87,17 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   const clearNotifications = () => {
+    if (typeof pendo !== 'undefined') {
+      const unread = notifications.filter(n => !n.read).length;
+      const reminders = notifications.filter(n => n.type === 'reminder').length;
+      const overdues = notifications.filter(n => n.type === 'overdue').length;
+      pendo.track('notifications_cleared', {
+        notificationCount: notifications.length,
+        unreadCount: unread,
+        reminderCount: reminders,
+        overdueCount: overdues,
+      });
+    }
     setNotifications([]);
   };
 
@@ -104,6 +124,17 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
               `Reminder: Task "${task.title}" is due soon!`,
               'reminder'
             );
+            if (typeof pendo !== 'undefined') {
+              pendo.track('reminder_triggered', {
+                taskId: task.id,
+                taskTitle: task.title,
+                reminderType: task.reminder,
+                dueDate: task.dueDate,
+                dueTime: task.dueTime,
+                taskPriority: task.priority,
+                browserNotificationPermission: 'Notification' in window ? Notification.permission : 'unsupported',
+              });
+            }
             markReminderTriggered(task.id);
           }
 
@@ -119,6 +150,15 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
                 `Task "${task.title}" is overdue!`,
                 'overdue'
               );
+              if (typeof pendo !== 'undefined') {
+                pendo.track('overdue_notification_created', {
+                  taskId: task.id,
+                  taskTitle: task.title,
+                  taskPriority: task.priority,
+                  dueDate: task.dueDate,
+                  categoryId: task.categoryId,
+                });
+              }
             }
           }
         }

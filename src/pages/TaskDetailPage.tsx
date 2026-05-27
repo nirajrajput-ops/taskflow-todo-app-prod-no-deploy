@@ -57,6 +57,18 @@ export const TaskDetailPage: React.FC = () => {
   };
 
   const handleToggleStatus = () => {
+    const newStatus = task.status === 'pending' ? 'completed' : 'pending';
+    if (typeof pendo !== 'undefined') {
+      pendo.track('task_status_toggled', {
+        taskId: task.id,
+        taskTitle: task.title,
+        newStatus,
+        previousStatus: task.status,
+        priority: task.priority,
+        categoryId: task.categoryId,
+        source: 'task_detail',
+      });
+    }
     toggleTaskStatus(task.id);
     showToast(
       task.status === 'pending' ? 'Task completed!' : 'Task marked as pending',
@@ -65,10 +77,33 @@ export const TaskDetailPage: React.FC = () => {
   };
 
   const handleToggleSubtask = (subtaskId: string) => {
+    const subtask = task.subtasks.find(s => s.id === subtaskId);
+    if (typeof pendo !== 'undefined') {
+      pendo.track('subtask_toggled', {
+        parentTaskId: task.id,
+        parentTaskTitle: task.title,
+        subtaskId,
+        subtaskTitle: subtask?.title || '',
+        newCompleted: !subtask?.completed,
+        totalSubtasks: task.subtasks.length,
+        completedSubtasks: task.subtasks.filter(s => s.completed).length,
+      });
+    }
     toggleSubtask(task.id, subtaskId);
   };
 
   const handleDelete = () => {
+    if (typeof pendo !== 'undefined') {
+      pendo.track('task_deleted', {
+        taskId: task.id,
+        taskTitle: task.title,
+        priority: task.priority,
+        categoryId: task.categoryId,
+        status: task.status,
+        hadSubtasks: task.subtasks.length > 0,
+        source: 'task_detail',
+      });
+    }
     deleteTask(task.id);
     showToast('Task deleted', 'success');
     navigate('/tasks');

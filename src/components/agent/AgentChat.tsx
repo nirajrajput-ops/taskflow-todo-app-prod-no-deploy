@@ -123,6 +123,17 @@ export const AgentChat: React.FC = () => {
     const currentCtx = getThreadContext(activeThreadId);
     const { response, newCtx } = executeCommand(parsed, taskContext, currentCtx);
 
+    if (typeof pendo !== 'undefined') {
+      pendo.track('agent_command_executed', {
+        intent: parsed.intent || 'unknown',
+        rawInput: text.substring(0, 200),
+        inputLength: text.length,
+        success: !response.toLowerCase().includes('error'),
+        threadId: activeThreadId,
+        hasContextReference: !!currentCtx.lastMentionedTaskTitle,
+      });
+    }
+
     // Update the conversation context for this thread
     setThreadContext(activeThreadId, newCtx);
 
@@ -199,6 +210,12 @@ export const AgentChat: React.FC = () => {
 
   const handleNewThread = () => {
     const thread = createThread();
+    if (typeof pendo !== 'undefined') {
+      pendo.track('agent_thread_created', {
+        threadId: thread.id,
+        totalThreadCount: threads.length + 1,
+      });
+    }
     setThreads(prev => [thread, ...prev]);
     setActiveThreadId(thread.id);
     setView('chat');
@@ -210,6 +227,14 @@ export const AgentChat: React.FC = () => {
   };
 
   const handleDeleteThread = (threadId: string) => {
+    const threadToDelete = threads.find(t => t.id === threadId);
+    if (typeof pendo !== 'undefined') {
+      pendo.track('agent_thread_deleted', {
+        threadId,
+        messageCountInThread: threadToDelete?.messages.filter(m => m.role === 'user').length || 0,
+        remainingThreadCount: threads.length - 1,
+      });
+    }
     // Clean up conversation context for deleted thread
     setThreadContexts(prev => {
       const next = { ...prev };
