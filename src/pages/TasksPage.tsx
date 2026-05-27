@@ -29,6 +29,21 @@ export const TasksPage: React.FC = () => {
 
   // Update URL when filter changes
   const setFilter = useCallback((newFilter: TaskFilter) => {
+    if (typeof pendo !== 'undefined') {
+      const hasFilterChange =
+        newFilter.status !== 'all' ||
+        newFilter.priority !== 'all' ||
+        newFilter.categoryId !== 'all';
+      if (hasFilterChange) {
+        pendo.track('task_filters_applied', {
+          statusFilter: newFilter.status,
+          priorityFilter: newFilter.priority,
+          categoryFilter: newFilter.categoryId,
+          resultsCount: tasks.length,
+          totalTaskCount: tasks.length,
+        });
+      }
+    }
     const params = new URLSearchParams();
     if (newFilter.status !== 'all') params.set('status', newFilter.status);
     if (newFilter.priority !== 'all') params.set('priority', newFilter.priority);
@@ -37,7 +52,7 @@ export const TasksPage: React.FC = () => {
     const currentSort = searchParams.get('sort');
     if (currentSort && currentSort !== 'createdAt') params.set('sort', currentSort);
     setSearchParams(params, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, tasks.length]);
 
   const setSort = useCallback((newSort: TaskSort) => {
     const params = new URLSearchParams(searchParams);
@@ -82,6 +97,16 @@ export const TasksPage: React.FC = () => {
           t.title.toLowerCase().includes(searchLower) ||
           t.description.toLowerCase().includes(searchLower)
       );
+      if (typeof pendo !== 'undefined') {
+        pendo.track('task_search_executed', {
+          searchQuery: filter.search,
+          resultsCount: result.length,
+          totalTaskCount: tasks.length,
+          activeStatusFilter: filter.status,
+          activePriorityFilter: filter.priority,
+          activeCategoryFilter: filter.categoryId,
+        });
+      }
     }
 
     // Sort
