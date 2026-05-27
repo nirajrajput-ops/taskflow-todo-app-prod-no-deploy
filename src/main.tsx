@@ -9,8 +9,15 @@ declare global {
   interface Window {
     seedData: () => void;
   }
+  var pendo: any;
 }
 window.seedData = seedData;
+
+pendo.initialize({
+  visitor: {
+    id: ''
+  }
+});
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
