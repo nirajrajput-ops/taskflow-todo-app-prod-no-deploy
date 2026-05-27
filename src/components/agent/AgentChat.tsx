@@ -133,12 +133,14 @@ export const AgentChat: React.FC = () => {
       timestamp: new Date().toISOString(),
     };
 
-    window.pendo?.trackAgent("agent_response", {
-      agentId: "kcsKeoQG2vBrL9gcX5yI3AMOMSc",
-      conversationId: activeThreadId,
-      messageId: agentMsg.id,
-      content: response,
-    });
+    if (typeof pendo !== 'undefined') {
+      pendo.trackAgent("agent_response", {
+        agentId: "JhL4K0-HHEASRRji7A3piEllHik",
+        conversationId: activeThreadId,
+        messageId: agentMsg.id,
+        content: response,
+      });
+    }
 
     updateThread(activeThreadId, t => {
       const updated = {
@@ -167,13 +169,15 @@ export const AgentChat: React.FC = () => {
       timestamp: new Date().toISOString(),
     };
 
-    window.pendo?.trackAgent("prompt", {
-      agentId: "kcsKeoQG2vBrL9gcX5yI3AMOMSc",
-      conversationId: activeThreadId,
-      messageId: userMessage.id,
-      content: trimmed,
-      suggestedPrompt: false,
-    });
+    if (typeof pendo !== 'undefined') {
+      pendo.trackAgent("prompt", {
+        agentId: "JhL4K0-HHEASRRji7A3piEllHik",
+        conversationId: activeThreadId,
+        messageId: userMessage.id,
+        content: trimmed,
+        suggestedPrompt: false,
+      });
+    }
 
     updateThread(activeThreadId, t => ({
       ...t,
@@ -195,13 +199,15 @@ export const AgentChat: React.FC = () => {
       timestamp: new Date().toISOString(),
     };
 
-    window.pendo?.trackAgent("prompt", {
-      agentId: "kcsKeoQG2vBrL9gcX5yI3AMOMSc",
-      conversationId: activeThreadId,
-      messageId: userMsg.id,
-      content: command,
-      suggestedPrompt: true,
-    });
+    if (typeof pendo !== 'undefined') {
+      pendo.trackAgent("prompt", {
+        agentId: "JhL4K0-HHEASRRji7A3piEllHik",
+        conversationId: activeThreadId,
+        messageId: userMsg.id,
+        content: command,
+        suggestedPrompt: true,
+      });
+    }
 
     updateThread(activeThreadId, t => ({
       ...t,
