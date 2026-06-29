@@ -118,10 +118,20 @@ export const AgentChat: React.FC = () => {
     setThreads(prev => prev.map(t => t.id === threadId ? updater(t) : t));
   }, []);
 
-  const processCommand = useCallback((text: string) => {
+  const processCommand = useCallback((text: string, isQuickAction: boolean = false) => {
     const parsed = parseCommand(text);
     const currentCtx = getThreadContext(activeThreadId);
     const { response, newCtx } = executeCommand(parsed, taskContext, currentCtx);
+
+    if (typeof pendo !== 'undefined') {
+      pendo.track('ai_command_sent', {
+        command: text.substring(0, 100),
+        intent: parsed.intent,
+        threadId: activeThreadId,
+        isQuickAction,
+        commandLength: text.length,
+      });
+    }
 
     // Update the conversation context for this thread
     setThreadContext(activeThreadId, newCtx);
@@ -169,7 +179,7 @@ export const AgentChat: React.FC = () => {
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => processCommand(trimmed), 300 + Math.random() * 400);
+    setTimeout(() => processCommand(trimmed, false), 300 + Math.random() * 400);
   };
 
   const handleQuickAction = (command: string) => {
@@ -187,7 +197,7 @@ export const AgentChat: React.FC = () => {
     }));
 
     setIsTyping(true);
-    setTimeout(() => processCommand(command), 300 + Math.random() * 400);
+    setTimeout(() => processCommand(command, true), 300 + Math.random() * 400);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

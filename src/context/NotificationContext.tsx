@@ -18,6 +18,10 @@ interface NotificationContextValue {
 
 const NotificationContext = createContext<NotificationContextValue | undefined>(undefined);
 
+// Module-level Sets to prevent pendo.track from re-firing inside the polling interval
+const trackedReminderIds = new Set<string>();
+const trackedOverdueIds = new Set<string>();
+
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission | 'default'>('default');
@@ -105,6 +109,18 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
               'reminder'
             );
             markReminderTriggered(task.id);
+            if (!trackedReminderIds.has(task.id) && typeof pendo !== 'undefined') {
+              trackedReminderIds.add(task.id);
+              pendo.track('reminder_triggered', {
+                taskId: task.id,
+                taskTitle: task.title,
+                reminderType: task.reminder,
+                taskPriority: task.priority,
+                dueDate: task.dueDate,
+                dueTime: task.dueTime,
+                browserNotificationPermission: 'Notification' in window ? Notification.permission : 'unsupported',
+              });
+            }
           }
 
           // Check for overdue (only notify once per task per session)
@@ -119,6 +135,23 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
                 `Task "${task.title}" is overdue!`,
                 'overdue'
               );
+              if (!trackedOverdueIds.has(task.id) && typeof pendo !== 'undefined') {
+                trackedOverdueIds.add(task.id);
+                const dueDateTime = new Date(task.dueDate!);
+                if (task.dueTime) {
+                  const [h, m] = task.dueTime.split(':');
+                  dueDateTime.setHours(parseInt(h), parseInt(m));
+                }
+                pendo.track('overdue_notification_triggered', {
+                  taskId: task.id,
+                  taskTitle: task.title,
+                  dueDate: task.dueDate,
+                  dueTime: task.dueTime,
+                  taskPriority: task.priority,
+                  categoryId: task.categoryId,
+                  daysPastDue: Math.max(0, Math.floor((Date.now() - dueDateTime.getTime()) / 86400000)),
+                });
+              }
             }
           }
         }
