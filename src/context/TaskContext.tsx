@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, useRef, ReactN
 import { v4 as uuidv4 } from 'uuid';
 import { Task, Category } from '../types';
 import { storage } from '../utils/storage';
+import { isOverdue } from '../utils/dateUtils';
 
 interface TaskState {
   tasks: Task[];
@@ -184,10 +185,50 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const deleteTask = (taskId: string) => {
+    const task = state.tasks.find(t => t.id === taskId);
+    if (task && typeof pendo !== 'undefined') {
+      pendo.track('task_deleted', {
+        taskId: task.id,
+        title: task.title,
+        taskStatus: task.status,
+        priority: task.priority,
+        categoryId: task.categoryId,
+        subtaskCount: task.subtasks.length,
+        hadDueDate: !!task.dueDate,
+        daysSinceCreation: Math.floor((Date.now() - new Date(task.createdAt).getTime()) / 86400000),
+      });
+    }
     dispatch({ type: 'DELETE_TASK', payload: taskId });
   };
 
   const toggleTaskStatus = (taskId: string) => {
+    const task = state.tasks.find(t => t.id === taskId);
+    if (task && typeof pendo !== 'undefined') {
+      if (task.status === 'pending') {
+        const completedSubs = task.subtasks.filter(s => s.completed).length;
+        pendo.track('task_completed', {
+          taskId: task.id,
+          title: task.title,
+          priority: task.priority,
+          categoryId: task.categoryId,
+          hasDueDate: !!task.dueDate,
+          wasOverdue: !!task.dueDate && isOverdue(task.dueDate, task.dueTime, task.status),
+          subtaskCount: task.subtasks.length,
+          completedSubtaskCount: completedSubs,
+          daysSinceCreation: Math.floor((Date.now() - new Date(task.createdAt).getTime()) / 86400000),
+        });
+      } else {
+        pendo.track('task_reopened', {
+          taskId: task.id,
+          title: task.title,
+          priority: task.priority,
+          categoryId: task.categoryId,
+          daysSinceCompletion: task.completedAt
+            ? Math.floor((Date.now() - new Date(task.completedAt).getTime()) / 86400000)
+            : 0,
+        });
+      }
+    }
     dispatch({ type: 'TOGGLE_TASK_STATUS', payload: taskId });
   };
 
